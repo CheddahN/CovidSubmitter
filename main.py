@@ -43,10 +43,16 @@ def job():
             'status': 'passed'
         }
         response = requests.put(url=url, headers=headers, data=data)
-        print(str(response.status_code) + str(response.json()) + ' ' + file['users'][user]['FirstName'] + ' ' + file['users'][user]['LastName'])
+        if response.status_code == 200:
+            print(str(response.status_code) + str(response.json()) + ' ' + file['users'][user]['FirstName'] + ' ' +
+                  file['users'][user]['LastName'])
+        else:
+            print(str(response.status_code) + ' ' + file['users'][user]['FirstName'] + ' ' +
+                  file['users'][user]['LastName'])
 
 
 schedule.every().day.at('06:20').do(job)
+job()
 while True:
     schedule.run_pending()
     time.sleep(1)
