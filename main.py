@@ -47,7 +47,6 @@ def job():
 
 
 schedule.every().day.at('06:20').do(job)
-job()
 while True:
     schedule.run_pending()
     time.sleep(1)
