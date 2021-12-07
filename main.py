@@ -1,7 +1,7 @@
 import asyncio
 import json
 import discord
-from discord.ext import tasks
+from colorama import Fore, Back, Style
 from datetime import datetime, timedelta
 from playwright.async_api import async_playwright
 
@@ -22,7 +22,7 @@ client = discord.Client()
 
 async def login(email, password, test):
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=False)
+        browser = await p.chromium.launch(headless=True)
         page = await browser.new_page()
         await page.goto('https://login.microsoftonline.com/?whr=dsbn.org')
         await page.wait_for_load_state()
@@ -43,12 +43,6 @@ async def login(email, password, test):
             await page.goto('https://student-covid-screening.dsbn.org/pass')
             await page.locator('text="Go to school"').click()
             await browser.close()
-
-
-@tasks.loop(hours=24)
-async def job():
-    for user in data['users']:
-        await login(email=data['users'][user]['email'], password=data['users'][user]['password'], test=False)
 
 
 @client.event
@@ -79,7 +73,7 @@ async def on_message(message):
                 with open('data.json', 'w') as file:
                     json.dump(data, file)
                 await channel.send('Successfully added ' + email.content + ' to the list')
-                await print("Added " + email.content + " from " + str(channel.id))
+                print("Added " + email.content + " from " + str(channel.id))
             else:
                 await channel.send('An error occurred, check your spelling or try again later')
     elif message.content.startswith(data['prefix'] + 'check'):
@@ -103,16 +97,22 @@ async def on_ready():
     print('Logged in as ' + client.user.name)
 
 
-@job.before_loop
-async def before_job():
-    hour = 6
-    minute = 20
-    await client.wait_until_ready()
-    now = datetime.now()
-    future = datetime.datetime(now.year, now.month, now.day, hour, minute)
-    if now.hour >= hour and now.minute > minute:
-        future += timedelta(days=1)
-    await asyncio.sleep((future-now).seconds)
+async def job():
+    while True:
+        hour = 6
+        minute = 20
+        await client.wait_until_ready()
+        now = datetime.now()
+        future = datetime(now.year, now.month, now.day, hour, minute)
+        if future.day == now.day:
+            future += timedelta(days=1)
+        print(f"{Fore.RED}Next run " + str(future) + Fore.RESET)
+        await asyncio.sleep((future - now).seconds)
 
-job.start()
+        for user in data['users']:
+            response = await login(email=data['users'][user]['email'], password=data['users'][user]['password'], test=False)
+            print(Fore.BLUE + data['users'][user]['email'] + " success " + response + Fore.RESET)
+
+
+client.loop.create_task(job())
 client.run(data['token'])
