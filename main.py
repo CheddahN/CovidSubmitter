@@ -22,7 +22,7 @@ client = discord.Client()
 
 async def login(email, password, test):
     async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
+        browser = await p.chromium.launch(headless=False)
         page = await browser.new_page()
         await page.goto('https://login.microsoftonline.com/?whr=dsbn.org')
         await page.wait_for_load_state()
@@ -43,6 +43,7 @@ async def login(email, password, test):
             await page.goto('https://student-covid-screening.dsbn.org/pass')
             await page.locator('text="Go to school"').click()
             await browser.close()
+            return True
 
 
 @client.event
@@ -99,19 +100,19 @@ async def on_ready():
 
 async def job():
     while True:
-        hour = 6
-        minute = 20
+        hour = 7
+        minute = 00
         await client.wait_until_ready()
         now = datetime.now()
         future = datetime(now.year, now.month, now.day, hour, minute)
-        if future.day == now.day:
+        if future.time() <= now.time():
             future += timedelta(days=1)
-        print(f"{Fore.RED}Next run " + str(future) + Fore.RESET)
-        await asyncio.sleep((future - now).seconds)
+        print(f"{Fore.YELLOW}Next run " + str(future) + " in " + str((future - now).total_seconds()) + " seconds"+ Fore.RESET)
+        await asyncio.sleep((future - now).total_seconds())
 
         for user in data['users']:
             response = await login(email=data['users'][user]['email'], password=data['users'][user]['password'], test=False)
-            print(Fore.BLUE + data['users'][user]['email'] + " success " + response + Fore.RESET)
+            print(Fore.BLUE + data['users'][user]['email'] + " success " + str(response) + Fore.RESET)
 
 
 client.loop.create_task(job())
