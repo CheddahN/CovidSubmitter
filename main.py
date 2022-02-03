@@ -40,8 +40,27 @@ async def login(email, password, test):
             except:
                 return False
         else:
-            await page.goto('https://student-covid-screening.dsbn.org/pass')
-            await page.locator('text="Go to school"').click()
+            await page.goto('https://student-covid-screening.dsbn.org/simple')
+            await page.click('text="Take the School and Child Care Screening Online"')
+            await page.wait_for_url('https://covid-19.ontario.ca/school-screening/**')
+            await page.click('text="Start school screening"')
+            await page.wait_for_url('https://covid-19.ontario.ca/school-screening/vaccinated')
+            await page.click("button:has-text(\"No\")")
+            await page.wait_for_url('https://covid-19.ontario.ca/school-screening/travel')
+            await page.click("button:has-text(\"No\")")
+            await page.wait_for_url('https://covid-19.ontario.ca/school-screening/symptoms')
+            await page.check("input[name=\"none_of_the_above\"]")
+            await page.click('text="Continue"')
+            await page.wait_for_url('https://covid-19.ontario.ca/school-screening/covid-positive')
+            await page.click("button:has-text(\"No\")")
+            await page.wait_for_url('https://covid-19.ontario.ca/school-screening/household-isolation')
+            await page.click("button:has-text(\"No\")")
+            await page.wait_for_url('https://covid-19.ontario.ca/school-screening/doctor-self-isolate')
+            await page.click("button:has-text(\"No\")")
+            await page.wait_for_url('https://covid-19.ontario.ca/school-screening/contact')
+            await page.click("button:has-text(\"No\")")
+            await page.wait_for_url('https://covid-19.ontario.ca/school-screening/approved')
+            await asyncio.sleep(3)
             await browser.close()
             return True
 
@@ -101,7 +120,7 @@ async def on_ready():
 async def job():
     while True:
         hour = 7
-        minute = 00
+        minute = 10
         await client.wait_until_ready()
         now = datetime.now()
         future = datetime(now.year, now.month, now.day, hour, minute)
@@ -113,7 +132,6 @@ async def job():
         for user in data['users']:
             response = await login(email=data['users'][user]['email'], password=data['users'][user]['password'], test=False)
             print(Fore.BLUE + data['users'][user]['email'] + " success " + str(response) + Fore.RESET)
-
 
 client.loop.create_task(job())
 client.run(data['token'])
